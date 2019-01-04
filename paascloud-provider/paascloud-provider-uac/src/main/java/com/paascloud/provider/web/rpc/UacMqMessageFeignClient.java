@@ -33,6 +33,7 @@ import java.util.List;
 /**
  * Mq 消息.
  *
+ *
  * @author paascloud.net @gmail.com
  */
 @RestController
@@ -41,10 +42,17 @@ public class UacMqMessageFeignClient extends BaseController implements UacMqMess
 	@Resource
 	private MqMessageService mqMessageService;
 
+	/**
+	 * 查询本业务服务确实需要发送的消息
+	 * @param messageKeyList the message key list
+	 *
+	 * @return
+	 */
 	@Override
 	@ApiOperation(httpMethod = "POST", value = "查询含有的messageKey")
 	public Wrapper<List<String>> queryMessageKeyList(@RequestParam("messageKeyList") List<String> messageKeyList) {
 		logger.info("查询消息KEY. messageKeyList={}", messageKeyList);
+		// 这里应该调用查询状态为已发送的消息？？？？？
 		return WrapMapper.ok(mqMessageService.queryMessageKeyList(messageKeyList));
 	}
 

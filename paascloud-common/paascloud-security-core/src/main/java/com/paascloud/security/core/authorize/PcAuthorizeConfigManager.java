@@ -19,6 +19,7 @@ public class PcAuthorizeConfigManager implements AuthorizeConfigManager {
 
 	/**
 	 * Instantiates a new Pc authorize config manager.
+	 * 将每个AuthorizeConfigProvider实现添加到该list中
 	 *
 	 * @param authorizeConfigProviders the authorize config providers
 	 */
@@ -48,6 +49,7 @@ public class PcAuthorizeConfigManager implements AuthorizeConfigManager {
 			}
 		}
 
+		// 如果各服务没有自己的配置，那么默认所有url都需要认证
 		if (!existAnyRequestConfig) {
 			config.anyRequest().authenticated();
 		}

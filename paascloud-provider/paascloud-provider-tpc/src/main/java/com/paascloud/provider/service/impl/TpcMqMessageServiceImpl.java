@@ -66,6 +66,10 @@ public class TpcMqMessageServiceImpl extends BaseService<TpcMqMessage> implement
 	@Resource
 	private OpcRpcService opcRpcService;
 
+	/**
+	 * 保存预发送消息
+	 * @param messageDto
+	 */
 	@Override
 	public void saveMessageWaitingConfirm(TpcMqMessageDto messageDto) {
 
@@ -81,6 +85,10 @@ public class TpcMqMessageServiceImpl extends BaseService<TpcMqMessage> implement
 		tpcMqMessageMapper.insertSelective(message);
 	}
 
+	/**
+	 * 正式发送可靠消息
+	 * @param messageKey the message key
+	 */
 	@Override
 	public void confirmAndSendMessage(String messageKey) {
 		final TpcMqMessage message = tpcMqMessageMapper.getByMessageKey(messageKey);
@@ -96,9 +104,14 @@ public class TpcMqMessageServiceImpl extends BaseService<TpcMqMessage> implement
 		// 创建消费待确认列表
 		this.createMqConfirmListByTopic(message.getMessageTopic(), message.getId(), message.getMessageKey());
 		// 直接发送消息
+		// 这里能否异步发送？？？前面本地消息表已经保存成功了，即便这里发送失败，定时扫描任务到消费者确认后再发一次就行了
 		this.directSendMessage(message.getMessageBody(), message.getMessageTopic(), message.getMessageTag(), message.getMessageKey(), message.getProducerGroup(), message.getDelayLevel());
 	}
 
+	/**
+	 *
+	 * @param tpcMqMessageDto
+	 */
 	@Override
 	public void saveAndSendMessage(TpcMqMessageDto tpcMqMessageDto) {
 		if (StringUtils.isEmpty(tpcMqMessageDto.getMessageTopic())) {
@@ -111,10 +124,12 @@ public class TpcMqMessageServiceImpl extends BaseService<TpcMqMessage> implement
 		message.setId(generateId());
 		message.setUpdateTime(now);
 		message.setCreatedTime(now);
-
+		// 更新生产者消息表
 		tpcMqMessageMapper.insertSelective(message);
 		// 创建消费待确认列表
+		// 插入到消费者待确认列表
 		this.createMqConfirmListByTopic(message.getMessageTopic(), message.getId(), message.getMessageKey());
+		// 这里能否异步发送？？？前面本地消息表已经保存成功了，即便这里发送失败，定时扫描任务到消费者确认后再发一次就行了
 		this.directSendMessage(tpcMqMessageDto.getMessageBody(), tpcMqMessageDto.getMessageTopic(), tpcMqMessageDto.getMessageTag(), tpcMqMessageDto.getMessageKey(), tpcMqMessageDto.getProducerGroup(), tpcMqMessageDto.getDelayLevel());
 	}
 
@@ -168,6 +183,11 @@ public class TpcMqMessageServiceImpl extends BaseService<TpcMqMessage> implement
 		return tpcMqMessageMapper.listMessageForWaitingProcess(query);
 	}
 
+	/**
+	 * 消费返回确认收到消息
+	 * @param cid        the cid
+	 * @param messageKey the message key
+	 */
 	@Override
 	public void confirmReceiveMessage(final String cid, final String messageKey) {
 		// 1. 校验cid
@@ -178,6 +198,11 @@ public class TpcMqMessageServiceImpl extends BaseService<TpcMqMessage> implement
 		tpcMqConfirmMapper.confirmReceiveMessage(confirmId);
 	}
 
+	/**
+	 * 确认已消费
+	 * @param cid        the cid
+	 * @param messageKey the message key
+	 */
 	@Override
 	public void confirmConsumedMessage(final String cid, final String messageKey) {
 		Long confirmId = tpcMqConfirmMapper.getIdMqConfirm(cid, messageKey);
@@ -189,10 +214,17 @@ public class TpcMqMessageServiceImpl extends BaseService<TpcMqMessage> implement
 		return 0;
 	}
 
+	/**
+	 * 找到所有订阅该消息主题的消费者，每个消费者对应该该消息都有一个消费状态
+	 * @param topic      the topic
+	 * @param messageId  the message id
+	 * @param messageKey the message key
+	 */
 	@Override
 	public void createMqConfirmListByTopic(final String topic, final Long messageId, final String messageKey) {
 		List<TpcMqConfirm> list = Lists.newArrayList();
 		TpcMqConfirm tpcMqConfirm;
+		// 确保消费者已经注册到可靠消息中心（表里能查到）
 		List<String> consumerGroupList = tpcMqConsumerService.listConsumerGroupByTopic(topic);
 		if (PublicUtil.isEmpty(consumerGroupList)) {
 			throw new TpcBizException(ErrorCodeEnum.TPC100500010, topic);
@@ -210,6 +242,12 @@ public class TpcMqMessageServiceImpl extends BaseService<TpcMqMessage> implement
 		return tpcMqMessageMapper.queryWaitingConfirmMessageKeyList(query);
 	}
 
+	/**
+	 * 这里同时处理无效预消息，需要确实发送的消息
+	 * 这两个是不同的逻辑，难道不是分开处理更好？
+	 * @param deleteKeyList the delete key list
+	 * @param resendKeyList the resend key list
+	 */
 	@Override
 	public void handleWaitingConfirmMessage(final List<String> deleteKeyList, final List<String> resendKeyList) {
 		tpcMqMessageMapper.batchDeleteMessage(deleteKeyList);

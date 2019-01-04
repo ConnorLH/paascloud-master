@@ -42,7 +42,7 @@
 │  │  │
 │  │  ├─paascloud-provider-opc------------------对接服务中心
 │  │  │
-│  │  ├─paascloud-provider-tpc------------------任务服务中心
+│  │  ├─paascloud-provider-tpc------------------任务（消息）服务中心
 │  │  │
 │  │  └─paascloud-provider-uac------------------用户服务中心
 │  │

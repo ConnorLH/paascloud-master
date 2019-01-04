@@ -26,6 +26,7 @@ import java.util.List;
 
 /**
  * The class Core header interceptor.
+ * 开启Hystrix缓存功能，即同一request请求相同服务时，第二次的结果从缓存中获取
  *
  * @author paascloud.net@gmail.com
  */

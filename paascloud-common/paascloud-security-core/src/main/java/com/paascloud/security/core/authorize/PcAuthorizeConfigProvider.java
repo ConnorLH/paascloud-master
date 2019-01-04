@@ -20,7 +20,7 @@ public class PcAuthorizeConfigProvider implements AuthorizeConfigProvider {
 	 *
 	 * @param config the config
 	 *
-	 * @return the boolean
+	 * @return the boolean false：核心配置（必须） true：个性配置
 	 */
 	@Override
 	public boolean config(ExpressionUrlAuthorizationConfigurer<HttpSecurity>.ExpressionInterceptUrlRegistry config) {

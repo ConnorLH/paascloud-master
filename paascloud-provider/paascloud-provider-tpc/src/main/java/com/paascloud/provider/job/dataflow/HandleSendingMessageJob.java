@@ -34,6 +34,7 @@ import java.util.List;
 
 /**
  * 处理发送中的消息数据.
+ * 即本地消息日志表表明已发送到MQ的消息，但超时未响应消费
  *
  * @author paascloud.net @gmail.com
  */
@@ -74,6 +75,7 @@ public class HandleSendingMessageJob extends AbstractBaseDataflowJob<TpcMqMessag
 
 	/**
 	 * Process job data.
+	 * 这里处理不用回查消费者确认是否消费成功？？？？
 	 *
 	 * @param taskList the task list
 	 */
@@ -83,6 +85,7 @@ public class HandleSendingMessageJob extends AbstractBaseDataflowJob<TpcMqMessag
 		for (TpcMqMessage message : taskList) {
 
 			Integer resendTimes = message.getResendTimes();
+			// 超过最大次数标记为死亡消息
 			if (resendTimes >= messageMaxSendTimes) {
 				tpcMqMessageService.setMessageToAlreadyDead(message.getId());
 				continue;
@@ -106,18 +109,20 @@ public class HandleSendingMessageJob extends AbstractBaseDataflowJob<TpcMqMessag
 			int updateRes = tpcMqMessageService.updateMqMessageTaskStatus(message);
 			if (updateRes > 0) {
 				try {
-
+					// 这里要考虑消息是否广播，广播模式要全部确认消费才行
 					// 查询是否全部订阅者都确认了消息 是 则更新消息状态完成, 否则重发消息
-
+					// 查询消费者消费状态表
 					int count = tpcMqConfirmMapper.selectUnConsumedCount(message.getMessageKey());
 					int status = JobTaskStatusEnum.TASK_CREATE.status();
 					if (count < 1) {
+						// 全部成功则修改message表为成功
 						TpcMqMessage update = new TpcMqMessage();
 						update.setMessageStatus(MqSendStatusEnum.FINISH.sendStatus());
 						update.setId(message.getId());
 						tpcMqMessageService.updateMqMessageStatus(update);
 						status = JobTaskStatusEnum.TASK_SUCCESS.status();
 					} else {
+						// 有一个不成功则重发消息
 						tpcMqMessageService.resendMessageByMessageId(message.getId());
 					}
 

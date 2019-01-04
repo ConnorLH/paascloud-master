@@ -30,6 +30,7 @@ import java.util.List;
 
 /**
  * 处理待确认的消息数据.
+ * 定时扫描待确认消息，进行回查确认
  *
  * @author paascloud.net @gmail.com
  */
@@ -47,6 +48,9 @@ public class HandleWaitingConfirmMessageJob extends AbstractBaseDataflowJob<Stri
 
 	/**
 	 * Fetch job data list.
+	 * 拉取本分片需要处理的数据
+	 * 分片逻辑在SQL中
+	 * mod(id, #{shardingTotalCount}) = #{shardingItem}
 	 *
 	 * @param jobParameter the job parameter
 	 *
@@ -67,6 +71,7 @@ public class HandleWaitingConfirmMessageJob extends AbstractBaseDataflowJob<Stri
 
 	/**
 	 * Process job data.
+	 * 回查消息
 	 *
 	 * @param messageKeyList the message key list
 	 */
@@ -75,11 +80,16 @@ public class HandleWaitingConfirmMessageJob extends AbstractBaseDataflowJob<Stri
 		if (messageKeyList == null) {
 			return;
 		}
+		// 查询回来哪些确实需要发送
+		// 这里难道不是到对应服务去查？？？传入的参数只需要messagekey？？不要服务ID？？
+		// 如果是按照预消息只是回查，正式消息作为实际消息的涉及思路，这里的返回值应该包括确实需要发送的消息内容
 		List<String> resendMessageList = uacRpcService.queryWaitingConfirmMessageKeyList(messageKeyList);
 		if (resendMessageList == null) {
 			resendMessageList = Lists.newArrayList();
 		}
+		// 去掉确实需要发送的，其他的就是无效预消息
 		messageKeyList.removeAll(resendMessageList);
+		// 将确实需要发送的发送到MQ
 		tpcMqMessageService.handleWaitingConfirmMessage(messageKeyList, resendMessageList);
 	}
 }

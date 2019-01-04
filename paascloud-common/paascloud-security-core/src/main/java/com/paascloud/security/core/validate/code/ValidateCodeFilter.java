@@ -23,6 +23,9 @@ import java.util.Set;
 
 /**
  * 校验验证码的过滤器
+ * OncePerRequestFilter：该类型过滤器只执行一次（forward后不会执行）。
+ * PS：某些容器和servlet规范会导致forward也执行，这里为了稳妥继承这个类就行了
+ * InitializingBean：bean提供了初始化方法的方式，在init-method之前执行，报错后init-method不会执行
  *
  * @author paascloud.net @gmail.com
  */

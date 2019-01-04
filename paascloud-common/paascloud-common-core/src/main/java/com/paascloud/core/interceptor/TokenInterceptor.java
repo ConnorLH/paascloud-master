@@ -101,7 +101,7 @@ public class TokenInterceptor implements HandlerInterceptor {
 			return true;
 		}
 		log.info("<== preHandle - 调试模式不走认证.  OPTIONS={}", request.getMethod().toUpperCase());
-
+		// 放行CORS预检请求
 		if (OPTIONS.equalsIgnoreCase(request.getMethod())) {
 			log.info("<== preHandle - 调试模式不走认证.  url={}", uri);
 			return true;
@@ -112,6 +112,7 @@ public class TokenInterceptor implements HandlerInterceptor {
 			return true;
 		}
 
+		// 获取Bearer Token头信息（采用3种Bearer资源请求中的头部方式，也就是携带的token（访问令牌）信息啦）
 		String token = StringUtils.substringAfter(request.getHeader(HttpHeaders.AUTHORIZATION), "Bearer ");
 		log.info("<== preHandle - 权限拦截器.  token={}", token);
 		LoginAuthDto loginUser = (UserTokenDto) redisTemplate.opsForValue().get(RedisKeyUtil.getAccessTokenKey(token));

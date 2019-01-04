@@ -84,6 +84,12 @@ public class RedisValidateCodeRepository implements ValidateCodeRepository {
 		redisTemplate.delete(buildKey(request, type));
 	}
 
+	/**
+	 * 这里用deviceId作为key保证同一设备只能存一个，避免同一设备多次访问造成验证码浪费
+	 * @param request
+	 * @param type
+	 * @return
+	 */
 	private String buildKey(ServletWebRequest request, ValidateCodeType type) {
 		String deviceId = request.getHeader("deviceId");
 		if (StringUtils.isBlank(deviceId)) {

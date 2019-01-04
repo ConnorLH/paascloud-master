@@ -37,6 +37,9 @@ public class RestClientDetailsServiceImpl implements ClientDetailsService {
 			for (OAuth2ClientProperties client : securityProperties.getOauth2().getClients()) {
 				builder.withClient(client.getClientId())
 						.secret(client.getClientSecret())
+						// 这里只需要密码模式和客户端模式即可
+						// 客户端模式是其他模块认证的方式
+						// 密码模式还需要研究哪里使用
 						.authorizedGrantTypes("refresh_token", "password", "client_credentials")
 						.accessTokenValiditySeconds(client.getAccessTokenValidateSeconds())
 						.refreshTokenValiditySeconds(client.getRefreshTokenValiditySeconds())

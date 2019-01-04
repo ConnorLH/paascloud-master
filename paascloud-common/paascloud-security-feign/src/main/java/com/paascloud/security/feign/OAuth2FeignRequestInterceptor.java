@@ -20,6 +20,7 @@ import org.springframework.util.Assert;
 
 /**
  * The class O auth 2 feign request interceptor.
+ * 构建一个feign拦截器，将oauth的token放入每个请求中
  *
  * @author paascloud.net @gmail.com
  */
@@ -41,12 +42,15 @@ public class OAuth2FeignRequestInterceptor implements RequestInterceptor {
 
 	/**
 	 * Apply.
+	 * 这里有个疑问，是否所有的调用都必须携带token信息？
+	 * 是否应该给出一个可配置的方式（访问某些服务不需要token）
 	 *
 	 * @param template the template
 	 */
 	@Override
 	public void apply(RequestTemplate template) {
 		log.debug("Constructing Header {} for Token {}", HttpHeaders.AUTHORIZATION, BEARER_TOKEN_TYPE);
+		// oAuth2RestTemplate.getAccessToken()不会每次都发请求获取，登录一次之后就会保存起来
 		template.header(HttpHeaders.AUTHORIZATION, String.format("%s %s", BEARER_TOKEN_TYPE, oAuth2RestTemplate.getAccessToken().toString()));
 	}
 }

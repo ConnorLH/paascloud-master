@@ -70,7 +70,12 @@ public class SocialConfig extends SocialConfigurerAdapter {
 
 	/**
 	 * 社交登录配置类，供浏览器或app模块引入设计登录配置用。
-	 *
+	 * 这里构建一个PcSpringSocialConfigurer（SpringSocialConfigurer）
+	 * 在security拦截主配置处添加这个配置
+	 * 作用是在social登录成功后，自动redirect到设置的callback url时对其进行拦截处理
+	 * 这样就可以实现登录成功后的逻辑处理
+	 * 疑问：在这里直接构建SpringSocialConfigurer的实现类会不会有问题，电脑端和手机端的登录成功处理
+	 * 方式可能不同，这里应该配置多个bean将不同客户端的配置都构建出来再注册到security的拦截主配置中
 	 * @return spring social configurer
 	 */
 	@Bean

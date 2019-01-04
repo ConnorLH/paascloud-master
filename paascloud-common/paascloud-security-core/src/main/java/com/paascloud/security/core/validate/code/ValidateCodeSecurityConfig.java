@@ -26,6 +26,8 @@ public class ValidateCodeSecurityConfig extends SecurityConfigurerAdapter<Defaul
 	 */
 	@Override
 	public void configure(HttpSecurity http) {
+		// 处理表单登录的请求filter AbstractPreAuthenticatedProcessingFilter.class
+		// 这里在它之前添加验证码逻辑
 		http.addFilterBefore(validateCodeFilter, AbstractPreAuthenticatedProcessingFilter.class);
 	}
 

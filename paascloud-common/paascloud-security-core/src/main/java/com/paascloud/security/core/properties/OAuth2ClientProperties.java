@@ -23,6 +23,9 @@ public class OAuth2ClientProperties {
 	 */
 	private int accessTokenValidateSeconds = 7200;
 
+	/**
+	 * 超过这个时间后不再支持刷新token的方式获取token
+	 */
 	private int refreshTokenValiditySeconds = 2592000;
 
 	private String scope;

@@ -38,6 +38,7 @@ public class DeleteRpcExpireFileJob implements SimpleJob {
 	 */
 	@Override
 	public void execute(final ShardingContext shardingContext) {
+		// ？？这里不分片处理？？假设多个可靠消息服务，那么每个都会发送请求到每个opc去，重复了怎么办？？
 		opcRpcService.deleteExpireFile();
 	}
 }

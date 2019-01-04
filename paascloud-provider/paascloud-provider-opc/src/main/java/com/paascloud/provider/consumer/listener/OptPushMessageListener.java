@@ -34,6 +34,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * The class Opt push message listener.
+ * 本服务的MQ消费者实现
  *
  * @author paascloud.net@gmail.com
  */

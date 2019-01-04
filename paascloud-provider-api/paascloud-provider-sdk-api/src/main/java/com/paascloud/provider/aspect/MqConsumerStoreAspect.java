@@ -34,7 +34,14 @@ import java.util.List;
 
 /**
  * The class Mq consumer store aspect.
- *
+ * 可靠消息{@link MqConsumerStore}注解消费者AOP功能实现
+ * 被该注解的方法会按照如下步骤执行
+ * 1、下游应用监听 MQ 消息组件并获取消息, 并存储本地消息
+ * 2、下游系统通知可靠消息服务已接收到消息
+ * 3、可靠消息把消息更新为已接收状态
+ * 4、下游应用根据 MQ 消息体信息处理本地业务
+ * 5、下游应用向 MQ 组件自动发送 ACK 确认消息被消费
+ * 6、下游应用通知可靠消息系统消息被成功消费，可靠消息将该消息状态更改为以消费,任务表状态修改为已完成。
  * @author paascloud.net @gmail.com
  */
 @Slf4j
@@ -73,6 +80,7 @@ public class MqConsumerStoreAspect {
 		long startTime = System.currentTimeMillis();
 		Object[] args = joinPoint.getArgs();
 		MqConsumerStore annotation = getAnnotation(joinPoint);
+		// 是否先向可靠消息中心响应已收到消息并保存到本地，默认为true保证可靠
 		boolean isStorePreStatus = annotation.storePreStatus();
 		List<MessageExt> messageExtList;
 		if (args == null || args.length == 0) {
@@ -92,6 +100,7 @@ public class MqConsumerStoreAspect {
 
 		MqMessageData dto = this.getTpcMqMessageDto(messageExtList.get(0));
 		final String messageKey = dto.getMessageKey();
+		// 这里先响应了已接收消息
 		if (isStorePreStatus) {
 			mqMessageService.confirmReceiveMessage(consumerGroup, dto);
 		}
@@ -103,6 +112,7 @@ public class MqConsumerStoreAspect {
 				mqMessageService.saveAndConfirmFinishMessage(consumerGroup, messageKey);
 			}
 		} catch (Exception e) {
+			// "发送可靠消息"？？？
 			log.error("发送可靠消息, 目标方法[{}], 出现异常={}", methodName, e.getMessage(), e);
 			throw e;
 		} finally {

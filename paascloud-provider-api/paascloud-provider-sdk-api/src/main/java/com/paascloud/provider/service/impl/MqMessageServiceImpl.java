@@ -62,6 +62,10 @@ public class MqMessageServiceImpl implements MqMessageService {
 	@Value("${spring.application.name}")
 	String applicationName;
 
+	/**
+	 * 保存到本地消息日志表
+	 * @param mqMessageData the mq message data
+	 */
 	@Override
 	public void saveMqProducerMessage(MqMessageData mqMessageData) {
 		// 校验消息数据
@@ -95,6 +99,11 @@ public class MqMessageServiceImpl implements MqMessageService {
 		}
 	}
 
+	/**
+	 * 正式发送消息
+	 * 这里发送完成不用修改本地消息表的消息状态？？？
+	 * @param messageKey the message key
+	 */
 	@Override
 	public void confirmAndSendMessage(String messageKey) {
 		// 发送确认消息给消息中心
@@ -126,6 +135,11 @@ public class MqMessageServiceImpl implements MqMessageService {
 		}
 	}
 
+	/**
+	 * 确认已经接收消息
+	 * @param cid 消费者分组id
+	 * @param messageData
+	 */
 	@Override
 	@Transactional(rollbackFor = Exception.class)
 	public void confirmReceiveMessage(String cid, MqMessageData messageData) {
@@ -134,6 +148,8 @@ public class MqMessageServiceImpl implements MqMessageService {
 		// 先保存消息
 		messageData.setMessageType(MqMessageTypeEnum.CONSUMER_MESSAGE.messageType());
 		messageData.setId(UniqueIdGenerator.generateId());
+		// 这里保证幂等了吗？？？有可能存入表成功，返回报错，那么会再次走到这里
+		// 可能造成主键冲突，所以应该先查一下
 		mqMessageDataMapper.insertSelective(messageData);
 
 		Wrapper wrapper = tpcMqMessageFeignApi.confirmReceiveMessage(cid, messageKey);
@@ -146,6 +162,15 @@ public class MqMessageServiceImpl implements MqMessageService {
 		}
 	}
 
+	/**
+	 * 确认已消费消息
+	 * 注意这里不用修改本地消息接收表状态为已消费
+	 * 回查消费者确认过程中如果是可靠消息为已消费而下游消费系统为已接收则不进行更新操作
+	 * 此种情况表示实际是消费成功的
+	 * 如果可靠消息为已接收，下游消费系统无论何种状态，再次发送消息即可
+	 * @param cid        消费者分组id
+	 * @param messageKey the message key
+	 */
 	@Override
 	public void saveAndConfirmFinishMessage(String cid, String messageKey) {
 		Wrapper wrapper = tpcMqMessageFeignApi.confirmConsumedMessage(cid, messageKey);
@@ -197,12 +222,17 @@ public class MqMessageServiceImpl implements MqMessageService {
 		return mqMessageDataMapper.queryMessageKeyList(messageKeyList);
 	}
 
+	/**
+	 * 发送待确认消息（预消息）
+	 * @param mqMessageData the mq message data
+	 */
 	@Override
 	@Transactional(rollbackFor = Exception.class)
 	public void saveWaitConfirmMessage(final MqMessageData mqMessageData) {
 		this.saveMqProducerMessage(mqMessageData);
 		// 发送预发送状态的消息给消息中心
 		TpcMqMessageDto tpcMqMessageDto = mqMessageData.getTpcMqMessageDto();
+		// 这里为什么不判断返回值？？？保证预消息发送成功
 		tpcMqMessageFeignApi.saveMessageWaitingConfirm(tpcMqMessageDto);
 		log.info("<== saveWaitConfirmMessage - 存储预发送消息成功. messageKey={}", mqMessageData.getMessageKey());
 	}

@@ -99,7 +99,9 @@ public class PcResourceServerConfig extends ResourceServerConfigurerAdapter {
 	@Override
 	public void configure(HttpSecurity http) throws Exception {
 		formAuthenticationConfig.configure(http);
+		// 防止网页被frame框架加载
 		http.headers().frameOptions().disable();
+		// 先添加一些必要的基础配置
 		http.apply(validateCodeSecurityConfig)
 				.and()
 				.apply(smsCodeAuthenticationSecurityConfig)
@@ -112,8 +114,9 @@ public class PcResourceServerConfig extends ResourceServerConfigurerAdapter {
 				.and()
 				.exceptionHandling().accessDeniedHandler(pcAccessDeniedHandler)
 				.and()
+				// 防止跨域请求（防CSRF攻击）
 				.csrf().disable();
-
+		// 加载核心配置项和各服务的个性化配置，这些配置的组织方式可以在这个配置管理器中去自己实现
 		authorizeConfigManager.config(http.authorizeRequests());
 	}
 

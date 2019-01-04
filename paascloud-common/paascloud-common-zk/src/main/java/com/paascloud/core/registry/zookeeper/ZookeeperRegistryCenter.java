@@ -493,6 +493,8 @@ public final class ZookeeperRegistryCenter implements CoordinatorRegistryCenter 
 			dto = new ReliableMessageRegisterDto().setProducerGroup(producerGroup).setNamesrvAddr(namesrvAddr);
 			String producerJson = JSON.toJSONString(dto);
 			this.persist(producerRootPath, producerJson);
+			// 使用临时节点注册本服务实例，如果断开连接可以自动删除节点
+            // ？？如果本host下有多个实例这样节点是不是就重复了，需要再进一步划分子节点？？
 			this.persistEphemeral(producerRootPath + GlobalConstant.Symbol.SLASH + host, DateUtil.now());
 		}
 		// 注册消费者

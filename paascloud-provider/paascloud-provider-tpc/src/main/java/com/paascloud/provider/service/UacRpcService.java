@@ -55,7 +55,13 @@ public class UacRpcService {
 		}
 	}
 
+	/**
+	 * 回查哪些消息确实需要发送的
+	 * @param messageKeyList
+	 * @return
+	 */
 	public List<String> queryWaitingConfirmMessageKeyList(List<String> messageKeyList) {
+		// 这里为什么只去用户中心查？？？不是找到各message对应的服务去查？？？
 		Wrapper<List<String>> wrapper = uacMqMessageFeignApi.queryMessageKeyList(messageKeyList);
 		if (wrapper == null) {
 			log.error("queryWaitingConfirmMessageKeyList 失败 result is null");
