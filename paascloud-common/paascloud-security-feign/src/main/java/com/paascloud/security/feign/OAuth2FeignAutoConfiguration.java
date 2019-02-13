@@ -28,9 +28,11 @@ import org.springframework.security.oauth2.common.AuthenticationScheme;
 /**
  * The class O auth 2 feign auto configuration.
  * 配置Oauth2的Client
- * 这里因为是内部模块认证，没有那么多请求可以这么做
+ * -XX-这里因为是内部模块认证，没有那么多请求可以这么做
  * 如果是像QQ那样大公司，提供用户的Oauth2认证，那么需要使用@EnableOAuth2Client
- * 以此来隔离每个request，防止认证的信息被共享，每个请求都使用自己的
+ * 以此来隔离每个request，防止认证的信息被共享，每个请求都使用自己的-XX-
+ * 我的理解是@EnableOAuth2Client 适用于与浏览器交互服务，这个服务中配置了受限url时，如果用户访问，那么这个功能将会自动引导用户走Oauth2流程。
+ * 但是对于app交互的服务，这个功能是不适用的，因为app是没办法自己完成Oauth2流程的，必须用户参与（Browser->A->B->C，其中C资源受限这种情况同样会有问题）。所以在调用方确定被调用方的资源受限时同样也需要在自己的服务中配置调用处的逻辑是受限的，这样一直传递到浏览器交互服务，再使用@EnableOAuth2Client即可。
  * 关于@EnableOAuth2Client这个注解包含了@EnableOAuth2Sso的功能，即发现要认证的时候帮我们去走Oauth2的授权流程（当然需要配置认证中心等信息）
  *
  *
@@ -83,6 +85,7 @@ public class OAuth2FeignAutoConfiguration {
 		// 请求构建工厂使用支持NIO的Netty4ClientHttpRequestFactory提高效率
 		// 默认是SimpleClientHttpRequestFactory这个，可能鸡肋
 		oAuth2RestTemplate.setRequestFactory(new Netty4ClientHttpRequestFactory());
+		// 这里可以配置ClientTokenServices来持久化token，避免服务重启token丢失需要重新授权。应该是必须配置的。
 		return oAuth2RestTemplate;
 
 	}

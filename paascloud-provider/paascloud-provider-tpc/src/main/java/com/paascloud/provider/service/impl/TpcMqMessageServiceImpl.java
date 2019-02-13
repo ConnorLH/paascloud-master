@@ -129,7 +129,7 @@ public class TpcMqMessageServiceImpl extends BaseService<TpcMqMessage> implement
 		// 创建消费待确认列表
 		// 插入到消费者待确认列表
 		this.createMqConfirmListByTopic(message.getMessageTopic(), message.getId(), message.getMessageKey());
-		// 这里能否异步发送？？？前面本地消息表已经保存成功了，即便这里发送失败，定时扫描任务到消费者确认后再发一次就行了
+		// 这里能否异步发送？？？前面本地消息表已经保存成功了，即便这里发送失败，定时扫描任务到消费者未确认后再发一次就行了
 		this.directSendMessage(tpcMqMessageDto.getMessageBody(), tpcMqMessageDto.getMessageTopic(), tpcMqMessageDto.getMessageTag(), tpcMqMessageDto.getMessageKey(), tpcMqMessageDto.getProducerGroup(), tpcMqMessageDto.getDelayLevel());
 	}
 

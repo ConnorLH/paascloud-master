@@ -42,15 +42,15 @@ public class OAuth2FeignRequestInterceptor implements RequestInterceptor {
 
 	/**
 	 * Apply.
-	 * 这里有个疑问，是否所有的调用都必须携带token信息？
-	 * 是否应该给出一个可配置的方式（访问某些服务不需要token）
-	 *
+	 * -XX-这里有个疑问，是否所有的调用都必须携带token信息？
+	 * 是否应该给出一个可配置的方式（访问某些服务不需要token）-XX-
+	 * 这里分两种情况，一种是浏览器交互服务，AccessToken可以直接用oAuth2RestTemplate去拿，拿不到会报错。另一种是app交互服务，需要调用方将AccessToken传递参数过来。所以这里也应该区分Browser依赖和App依赖。
 	 * @param template the template
 	 */
 	@Override
 	public void apply(RequestTemplate template) {
 		log.debug("Constructing Header {} for Token {}", HttpHeaders.AUTHORIZATION, BEARER_TOKEN_TYPE);
-		// oAuth2RestTemplate.getAccessToken()不会每次都发请求获取，登录一次之后就会保存起来
+		// oAuth2RestTemplate.getAccessToken()应该肯定能拿到的，登录一次之后就会保存起来
 		template.header(HttpHeaders.AUTHORIZATION, String.format("%s %s", BEARER_TOKEN_TYPE, oAuth2RestTemplate.getAccessToken().toString()));
 	}
 }
